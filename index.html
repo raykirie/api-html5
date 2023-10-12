@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Storage Example</title>
+</head>
+<body>
+    <h1>Список данных</h1>
+    <label for="keyInput">Ключ:</label>
+    <input type="text" id="keyInput">
+    <label for="valueInput">Значение:</label>
+    <input type="text" id="valueInput">
+    <button id="saveDataButton">Сохранить в Storage</button>
+    <button id="clearStorageButton">Очистить хранилище</button>
+    <button id="toggleStorageButton">Переключить хранилище</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Заголовок</th>
+                <th>Содержание</th>
+                <th>Удалить</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    <script>
+        let currentStorage = localStorage;
+
+        function updateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            const storageData = JSON.parse(currentStorage.getItem('data') || '[]');
+            if (storageData.length === 0) {
+                const emptyHeader = 'No Data';
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `<td>${emptyHeader}</td><td></td><td></td>`;
+                tableBody.appendChild(newRow);
+            } else {
+                for (const data of storageData) {
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `<td>${data.title}</td><td>${data.content}</td><td><span class="delete-item" data-key="${data.key}">X</span></td>`;
+                    tableBody.appendChild(newRow);
+                }
+            }
+
+            const deleteButtons = document.querySelectorAll('.delete-item');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    deleteItem(button.getAttribute('data-key'));
+                });
+            });
+        }
+
+        function getStorage() {
+            updateTable();
+        }
+
+        function saveItem(key, title, content) {
+            const storageData = JSON.parse(currentStorage.getItem('data') || '[]');
+            const newItem = { key, title, content };
+            storageData.push(newItem);
+            currentStorage.setItem('data', JSON.stringify(storageData));
+            updateTable();
+        }
+
+        function deleteItem(key) {
+            const confirmDelete = confirm("Вы уверены, что хотите удалить эту запись?");
+            if (confirmDelete) {
+                const storageData = JSON.parse(currentStorage.getItem('data') || '[]');
+                const updatedData = storageData.filter(item => item.key !== key);
+                currentStorage.setItem('data', JSON.stringify(updatedData));
+                updateTable();
+            }
+        }
+
+        function clearStorage() {
+            const confirmClear = confirm("Вы уверены, что хотите полностью очистить хранилище?");
+            if (confirmClear) {
+                currentStorage.removeItem('data');
+                updateTable();
+            }
+        }
+
+        function toggleStorage() {
+            if (currentStorage === localStorage) {
+                currentStorage = sessionStorage;
+                document.getElementById('toggleStorageButton').textContent = 'Переключить на LocalStorage';
+            } else {
+                currentStorage = localStorage;
+                document.getElementById('toggleStorageButton').textContent = 'Переключить на SessionStorage';
+            }
+            updateTable();
+        }
+
+        window.addEventListener('load', getStorage);
+        document.getElementById('clearStorageButton').addEventListener('click', clearStorage);
+        document.getElementById('toggleStorageButton').addEventListener('click', toggleStorage);
+
+        document.getElementById('saveDataButton').addEventListener('click', function() {
+            const keyInput = document.getElementById('keyInput').value;
+            const valueInput = document.getElementById('valueInput').value;
+
+            if (keyInput && valueInput) {
+                saveItem(keyInput, keyInput, valueInput);
+                document.getElementById('keyInput').value = '';
+                document.getElementById('valueInput').value = '';
+            } else {
+                alert('Введите ключ и значение, прежде чем сохранить в Storage.');
+            }
+        });
+    </script>
+</body>
+</html>
+
